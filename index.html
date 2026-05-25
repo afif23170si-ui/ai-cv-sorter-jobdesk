@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Final Project — AI CV Sorter | Topik 20</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0d1a;
+      --bg2: #13132a;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.08);
+      --purple: #7c3aed;
+      --purple-light: #a78bfa;
+      --purple-glow: rgba(124,58,237,0.3);
+      --cyan: #06b6d4;
+      --cyan-light: #67e8f9;
+      --green: #10b981;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* BG EFFECT */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20%;
+      left: -10%;
+      width: 60vw;
+      height: 60vw;
+      background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -20%;
+      right: -10%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* HEADER */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 60px 24px 48px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(124,58,237,0.06) 0%, transparent 100%);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
+      color: var(--purple-light);
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .badge::before { content: '🤖'; font-size: 14px; }
+
+    header h1 {
+      font-size: clamp(28px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #fff 0%, var(--purple-light) 50%, var(--cyan-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    header p.subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 540px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .header-meta {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .meta-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .meta-chip strong { color: var(--text); }
+
+    /* NAV TABS */
+    .nav-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,26,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+
+    nav {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      gap: 4px;
+    }
+    nav::-webkit-scrollbar { display: none; }
+
+    nav button {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 16px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    nav button:hover { color: var(--text-muted); }
+    nav button.active {
+      color: var(--purple-light);
+      border-bottom-color: var(--purple-light);
+    }
+
+    /* MAIN */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* SECTIONS */
+    section { display: none; }
+    section.active { display: block; animation: fadeUp 0.35s ease; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* SECTION TITLE */
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .section-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .icon-purple { background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.25); }
+    .icon-cyan   { background: rgba(6,182,212,0.15);  border: 1px solid rgba(6,182,212,0.25); }
+    .icon-green  { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.25); }
+    .icon-yellow { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.25); }
+    .icon-red    { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.25); }
+
+    .section-title-group h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .section-title-group p { font-size: 14px; color: var(--text-muted); }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .card:hover {
+      background: var(--surface-hover);
+      border-color: rgba(255,255,255,0.12);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* GRID */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+
+    /* TEAM TABLE */
+    .team-grid {
+      display: grid;
+      grid-template-columns: 40px 1fr 1fr 120px;
+      gap: 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .team-grid-header {
+      display: contents;
+    }
+    .team-grid-header > div {
+      background: rgba(124,58,237,0.15);
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--purple-light);
+      border-bottom: 1px solid var(--border);
+    }
+    .team-row {
+      display: contents;
+    }
+    .team-row > div {
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      align-items: center;
+    }
+    .team-row:last-child > div { border-bottom: none; }
+    .team-row:hover > div { background: var(--surface-hover); }
+
+    /* TAGS */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tag-purple { background: rgba(124,58,237,0.2); color: var(--purple-light); border: 1px solid rgba(124,58,237,0.3); }
+    .tag-cyan   { background: rgba(6,182,212,0.2);  color: var(--cyan-light);   border: 1px solid rgba(6,182,212,0.3); }
+    .tag-green  { background: rgba(16,185,129,0.2); color: #6ee7b7;             border: 1px solid rgba(16,185,129,0.3); }
+    .tag-yellow { background: rgba(245,158,11,0.2); color: #fcd34d;             border: 1px solid rgba(245,158,11,0.3); }
+    .tag-red    { background: rgba(239,68,68,0.2);  color: #fca5a5;             border: 1px solid rgba(239,68,68,0.3); }
+
+    /* STEPS */
+    .steps { position: relative; padding-left: 32px; }
+    .steps::before {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 8px;
+      bottom: 8px;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--purple), var(--cyan), transparent);
+    }
+
+    .step {
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .step::before {
+      content: '';
+      position: absolute;
+      left: -28px;
+      top: 5px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--purple-light);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 8px var(--purple-glow);
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* CODE BLOCK */
+    .code-block {
+      background: #0a0a1a;
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 12.5px;
+      color: #c4b5fd;
+      overflow-x: auto;
+      line-height: 1.7;
+      margin: 12px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .code-block .comment { color: var(--text-dim); }
+    .code-block .key { color: var(--cyan-light); }
+    .code-block .value { color: #a7f3d0; }
+    .code-block .keyword { color: #f9a8d4; }
+
+    /* ALERT */
+    .alert {
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+    }
+    .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .alert-warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #fcd34d; }
+    .alert-info    { background: rgba(6,182,212,0.1);  border: 1px solid rgba(6,182,212,0.25);  color: var(--cyan-light); }
+    .alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #6ee7b7; }
+    .alert-danger  { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.25);  color: #fca5a5; }
+
+    /* TABLE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin: 12px 0;
+    }
+    th {
+      background: rgba(124,58,237,0.12);
+      color: var(--purple-light);
+      font-size: 11.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    tr:last-child td { border-bottom: none; }
+    td strong { color: var(--text); }
+
+    /* CHECKLIST */
+    .checklist { list-style: none; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check-box {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      margin-top: 1px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .check-box:hover { border-color: var(--purple); }
+    .check-box.checked { background: var(--purple); border-color: var(--purple); }
+    .check-box.checked::after { content: '✓'; font-size: 11px; color: white; font-weight: 700; }
+    .checklist li.done { color: var(--text-dim); text-decoration: line-through; }
+
+    /* DISTRIBUTION CARD */
+    .dist-card {
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .dist-num {
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1;
+      min-width: 60px;
+    }
+    .dist-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .dist-sub { font-size: 12px; opacity: 0.7; }
+
+    /* PROGRESS */
+    .timeline {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 36px 1fr 130px 100px;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-item:hover { background: var(--surface-hover); }
+    .timeline-header {
+      display: grid;
+      grid-template-columns: 36px 1fr 130px 100px;
+      padding: 10px 16px;
+      background: rgba(124,58,237,0.12);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--purple-light);
+      gap: 12px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: auto;
+      background: var(--text-dim);
+    }
+    .status-dot.done { background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+    .status-dot.progress { background: var(--yellow); box-shadow: 0 0 6px rgba(245,158,11,0.5); animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* FLOW DIAGRAM */
+    .flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .flow-node {
+      background: rgba(124,58,237,0.12);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--purple-light);
+      white-space: nowrap;
+    }
+    .flow-arrow {
+      color: var(--text-dim);
+      font-size: 16px;
+    }
+
+    /* SLIDE OUTLINE */
+    .slide-item {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .slide-item:hover { background: var(--surface-hover); border-color: rgba(124,58,237,0.25); }
+    .slide-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      background: rgba(255,255,255,0.06);
+      border-radius: 6px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .slide-content strong { font-size: 14px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px; }
+    .slide-content p { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .team-grid { grid-template-columns: 36px 1fr 100px; }
+      .team-grid > *:nth-child(3), .team-row > div:nth-child(3) { display: none; }
+      .timeline-item, .timeline-header { grid-template-columns: 36px 1fr 90px; }
+      .timeline-item > *:last-child, .timeline-header > *:last-child { display: none; }
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.4); border-radius: 3px; }
+
+    hr.divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+    p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+    h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 20px 0 10px; }
+    ul, ol { padding-left: 20px; margin: 8px 0; }
+    li { font-size: 13.5px; color: var(--text-muted); line-height: 1.8; }
+    strong { color: var(--text); }
+    a { color: var(--purple-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Topik No. 20 — AI for Business Final Project</div>
+  <h1>AI CV Sorter &<br/>Auto-Scheduler</h1>
+  <p class="subtitle">Sistem Perekrutan Cerdas Terintegrasi — Breakdown Jobdesk & Panduan Pengerjaan</p>
+  <div class="header-meta">
+    <span class="meta-chip">🏢 SDM / HR</span>
+    <span class="meta-chip">⚙️ Tools: Gmail · Notion · Airtable · Groq AI · Google Calendar</span>
+    <span class="meta-chip">👥 <strong>5 Anggota</strong></span>
+    <span class="meta-chip">📅 Deadline: M4 Juni</span>
+  </div>
+</header>
+
+<div class="nav-wrapper">
+  <nav>
+    <button class="active" onclick="showTab('overview')">🏠 Overview</button>
+    <button onclick="showTab('jobdesk1')">📁 Jobdesk 1 — Fakhrul</button>
+    <button onclick="showTab('jobdesk2')">🔑 Jobdesk 2 — Fawwaz & Bagus</button>
+    <button onclick="showTab('jobdesk3')">⚙️ Jobdesk 3 — Afif & Shinta</button>
+    <button onclick="showTab('jobdesk4')">🎨 Jobdesk 4 — Slide</button>
+    <button onclick="showTab('schedule')">📅 Schedule</button>
+  </nav>
+</div>
+
+<main>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section id="overview" class="active">
+    <div class="section-header">
+      <div class="section-icon icon-purple">🤖</div>
+      <div class="section-title-group">
+        <h2>Overview Project</h2>
+        <p>Topik 20 — Sistem Perekrutan Cerdas Terintegrasi</p>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">💡</span>
+      <div><strong>Baca dulu sebelum mulai!</strong> Pilih tab sesuai nama kamu di navigasi atas untuk melihat instruksi jobdesk-mu secara lengkap.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 Latar Belakang Masalah</div>
+      <p>HRD perusahaan sering menerima <strong>ratusan CV per posisi</strong> yang masuk via email. Proses membaca dan menyortir secara manual sangat memakan waktu, tidak konsisten, dan kandidat yang lolos tidak langsung mendapat jadwal interview.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✅ Tujuan Sistem</div>
+      <p style="margin-bottom:12px">Membangun sistem otomasi yang mampu:</p>
+      <ul>
+        <li>Membaca CV PDF yang dikirim via email secara otomatis</li>
+        <li>Menilai & memberi skor CV menggunakan AI (dibandingkan Job Description di Notion)</li>
+        <li>Mengirim <strong>email penerimaan + link booking interview</strong> ke kandidat yang lolos</li>
+        <li>Mengirim <strong>email penolakan personal</strong> (bukan template generik) ke yang tidak lolos</li>
+        <li>Mencatat semua data pelamar ke <strong>Airtable</strong> secara otomatis</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔄 Alur Sistem Secara Umum</div>
+      <div class="flow">
+        <div class="flow-node">📧 Email CV Masuk</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">📄 Extract Teks PDF</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">📚 Baca Job Desc (Notion)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">🤖 Groq AI Scoring</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">🔀 Switch LOLOS / GAGAL</div>
+      </div>
+      <div class="flow" style="padding-left:20px">
+        <div class="flow-node" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7">✅ Email Accept + Calendar Link</div>
+        <span style="color:var(--text-dim);padding:0 12px">/</span>
+        <div class="flow-node" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:#fca5a5">❌ Email Rejection Personal</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">💾 Simpan ke Airtable</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <h3>👥 Pembagian Jobdesk Tim</h3>
+
+    <div class="team-grid">
+      <div class="team-grid-header">
+        <div>No</div>
+        <div>Jobdesk</div>
+        <div>Anggota</div>
+        <div>Status</div>
+      </div>
+      <div class="team-row">
+        <div style="color:var(--text-dim);font-weight:600">1</div>
+        <div><strong>Data Dummy 20 CV</strong><br/><span style="font-size:12px;color:var(--text-dim)">Buat 20 CV PDF realistis</span></div>
+        <div><span class="tag tag-purple">Fakhrul</span></div>
+        <div><span class="tag tag-yellow">Ongoing</span></div>
+      </div>
+      <div class="team-row">
+        <div style="color:var(--text-dim);font-weight:600">2</div>
+        <div><strong>Akun Google + Setup Credential</strong><br/><span style="font-size:12px;color:var(--text-dim)">Gmail, Groq, Notion, Airtable, Calendar</span></div>
+        <div><span class="tag tag-cyan">Fawwaz</span>&nbsp;<span class="tag tag-cyan">Bagus</span></div>
+        <div><span class="tag tag-yellow">Ongoing</span></div>
+      </div>
+      <div class="team-row">
+        <div style="color:var(--text-dim);font-weight:600">3</div>
+        <div><strong>Pembuatan Workflow n8n</strong><br/><span style="font-size:12px;color:var(--text-dim)">Build & test semua node di n8n</span></div>
+        <div><span class="tag tag-green">Afif</span>&nbsp;<span class="tag tag-green">Shinta</span></div>
+        <div><span class="tag tag-red">Tunggu JD2</span></div>
+      </div>
+      <div class="team-row">
+        <div style="color:var(--text-dim);font-weight:600">4</div>
+        <div><strong>Slide Presentasi</strong><br/><span style="font-size:12px;color:var(--text-dim)">Dikerjakan bareng-bareng</span></div>
+        <div><span style="font-size:12px;color:var(--text-dim)">Semua anggota</span></div>
+        <div><span class="tag tag-red">Belum mulai</span></div>
+      </div>
+    </div>
+
+    <div class="alert alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <div><strong>Ketergantungan antar jobdesk:</strong> Jobdesk 3 (Workflow) TIDAK BISA dimulai sebelum Jobdesk 2 (Credential) selesai. Fawwaz & Bagus harus kirim credential summary ke grup dulu!</div>
+    </div>
+  </section>
+
+  <!-- ===================== JOBDESK 1 ===================== -->
+  <section id="jobdesk1">
+    <div class="section-header">
+      <div class="section-icon icon-purple">📁</div>
+      <div class="section-title-group">
+        <h2>Jobdesk 1 — Data Dummy 20 CV</h2>
+        <p>PIC: <strong>Fakhrul</strong> · Deadline: Pekan M3 Mei</p>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">🎯</span>
+      <div>Kamu bertugas membuat <strong>20 file CV PDF</strong> yang akan digunakan untuk menguji sistem AI. CV harus terlihat realistis seperti pelamar sungguhan yang melamar posisi <strong>Data Analyst</strong>.</div>
+    </div>
+
+    <h3>📊 Distribusi 20 CV (WAJIB IKUTI)</h3>
+    <div class="grid-2">
+      <div class="dist-card" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2)">
+        <div class="dist-num" style="color:#6ee7b7">5</div>
+        <div>
+          <div class="dist-label" style="color:#6ee7b7">✅ Sangat Lolos</div>
+          <div class="dist-sub">Score target: 80–100</div>
+          <div class="dist-sub">Skill sangat relevan, pengalaman kuat</div>
+        </div>
+      </div>
+      <div class="dist-card" style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2)">
+        <div class="dist-num" style="color:var(--cyan-light)">7</div>
+        <div>
+          <div class="dist-label" style="color:var(--cyan-light)">✅ Lolos</div>
+          <div class="dist-sub">Score target: 65–79</div>
+          <div class="dist-sub">Relevan tapi ada beberapa kekurangan</div>
+        </div>
+      </div>
+      <div class="dist-card" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);grid-column: 1 / -1">
+        <div class="dist-num" style="color:#fca5a5">8</div>
+        <div>
+          <div class="dist-label" style="color:#fca5a5">❌ Tidak Lolos</div>
+          <div class="dist-sub">Score target: dibawah 65</div>
+          <div class="dist-sub">Skill tidak relevan atau pengalaman sangat kurang</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>📝 Struktur Setiap CV (Urut dari Atas)</h3>
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-title">1. Header / Informasi Pribadi</div>
+          <div class="code-block"><span class="key">Nama Lengkap</span> : Budi Santoso
+<span class="key">Email</span>        : budi.santoso@gmail.com   ← WAJIB ADA!
+<span class="key">No. HP</span>       : 0812-xxxx-xxxx
+<span class="key">Kota</span>         : Jakarta Selatan
+<span class="key">LinkedIn</span>     : linkedin.com/in/budisantoso (opsional)</div>
+        </div>
+        <div class="step">
+          <div class="step-title">2. Ringkasan Profil (3–5 kalimat)</div>
+          <div class="step-desc">Paragraf singkat: siapa dia, pengalaman berapa tahun, tujuan karir. Buat berbeda-beda tiap CV.</div>
+        </div>
+        <div class="step">
+          <div class="step-title">3. Pendidikan</div>
+          <div class="code-block">Universitas Indonesia | S1 Statistika | 2019–2023 | IPK 3.72</div>
+        </div>
+        <div class="step">
+          <div class="step-title">4. Pengalaman Kerja (0–3 entry)</div>
+          <div class="code-block">PT. XYZ | Data Analyst | Jan 2023 – Sekarang
+- Membuat dashboard Tableau untuk monitoring KPI harian
+- Analisis data penjualan menggunakan Python & SQL
+- Menyusun laporan mingguan untuk manajemen</div>
+        </div>
+        <div class="step">
+          <div class="step-title">5. Skills / Keahlian</div>
+          <div class="step-desc">List skill teknis. CV "Sangat Lolos" harus punya: Python, SQL, Tableau/Power BI. CV "Tidak Lolos" jangan ada skill ini.</div>
+        </div>
+        <div class="step">
+          <div class="step-title">6. Sertifikat & Proyek (opsional)</div>
+          <div class="step-desc">Tambahkan untuk CV kategori Lolos/Sangat Lolos. Kosongkan untuk CV Tidak Lolos.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>👥 Daftar 20 Nama yang Disarankan</h3>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table>
+        <thead>
+          <tr><th>No</th><th>Nama</th><th>Email</th><th>Kategori</th><th>Latar Belakang</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Budi Santoso</strong></td><td>budi.santoso@gmail.com</td><td><span class="tag tag-green">✅ Sangat Lolos</span></td><td>S1 Statistika, 3 thn, Python+SQL+Tableau</td></tr>
+          <tr><td>2</td><td><strong>Anisa Rahmawati</strong></td><td>anisa.rahmawati@gmail.com</td><td><span class="tag tag-green">✅ Sangat Lolos</span></td><td>S1 Informatika, Data Scientist 2 thn, ML</td></tr>
+          <tr><td>3</td><td><strong>Dimas Prasetyo</strong></td><td>dimas.prasetyo@gmail.com</td><td><span class="tag tag-green">✅ Sangat Lolos</span></td><td>S1 Matematika, 4 thn analyst, PowerBI+R</td></tr>
+          <tr><td>4</td><td><strong>Siti Nurhaliza</strong></td><td>siti.nurhaliza@gmail.com</td><td><span class="tag tag-green">✅ Sangat Lolos</span></td><td>S2 Data Science, fresh grad banyak proyek</td></tr>
+          <tr><td>5</td><td><strong>Rizky Firmansyah</strong></td><td>rizky.firmansyah@gmail.com</td><td><span class="tag tag-green">✅ Sangat Lolos</span></td><td>S1 Sistem Informasi, 3 thn BI Developer</td></tr>
+          <tr><td>6</td><td><strong>Dewi Anggraini</strong></td><td>dewi.anggraini@gmail.com</td><td><span class="tag tag-cyan">✅ Lolos</span></td><td>S1 Ekonomi, 2 thn analyst, Excel+SQL no Python</td></tr>
+          <tr><td>7</td><td><strong>Fajar Nugroho</strong></td><td>fajar.nugroho@gmail.com</td><td><span class="tag tag-cyan">✅ Lolos</span></td><td>S1 Informatika, fresh grad, Python+SQL baru</td></tr>
+          <tr><td>8</td><td><strong>Laila Fitriani</strong></td><td>laila.fitriani@gmail.com</td><td><span class="tag tag-cyan">✅ Lolos</span></td><td>S1 Statistika, 1 thn magang, skill oke exp minim</td></tr>
+          <tr><td>9</td><td><strong>Hendra Wijaya</strong></td><td>hendra.wijaya@gmail.com</td><td><span class="tag tag-cyan">✅ Lolos</span></td><td>S1 Teknik Industri, 2 thn analyst, Excel expert</td></tr>
+          <tr><td>10</td><td><strong>Nadia Permata</strong></td><td>nadia.permata@gmail.com</td><td><span class="tag tag-cyan">✅ Lolos</span></td><td>S1 Manajemen, belajar data sendiri, ada sertif</td></tr>
+          <tr><td>11</td><td><strong>Yoga Pratama</strong></td><td>yoga.pratama@gmail.com</td><td><span class="tag tag-cyan">✅ Lolos</span></td><td>S1 Informatika, 1 thn PHP dev tapi ada SQL</td></tr>
+          <tr><td>12</td><td><strong>Melisa Kartika</strong></td><td>melisa.kartika@gmail.com</td><td><span class="tag tag-cyan">✅ Lolos</span></td><td>S1 Akuntansi, Excel sangat expert, no Python/SQL</td></tr>
+          <tr><td>13</td><td><strong>Andi Setiawan</strong></td><td>andi.setiawan@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>S1 Sastra Inggris, tidak ada skill data</td></tr>
+          <tr><td>14</td><td><strong>Putri Maharani</strong></td><td>putri.maharani@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>SMA, tidak ada pengalaman relevan</td></tr>
+          <tr><td>15</td><td><strong>Bagas Wicaksono</strong></td><td>bagas.wicaksono@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>S1 Desain Grafis, Adobe suite saja</td></tr>
+          <tr><td>16</td><td><strong>Rini Susilowati</strong></td><td>rini.susilowati@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>S1 Keperawatan, background medis</td></tr>
+          <tr><td>17</td><td><strong>Wahyu Hidayat</strong></td><td>wahyu.hidayat@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>S1 Teknik Sipil, tidak relevan sama sekali</td></tr>
+          <tr><td>18</td><td><strong>Cindy Aulia</strong></td><td>cindy.aulia@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>S1 Komunikasi, marketing background</td></tr>
+          <tr><td>19</td><td><strong>Eko Purnomo</strong></td><td>eko.purnomo@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>S1 Hukum, tidak ada skill teknis</td></tr>
+          <tr><td>20</td><td><strong>Yuni Astuti</strong></td><td>yuni.astuti@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>D3 Perhotelan, hospitality background</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>🛠️ Tools yang Disarankan</h3>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🎨 Canva (Paling Mudah)</div>
+        <p>canva.com → Search "CV Resume" → Edit teks → Download as PDF. Gratis, hasilnya bagus.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">📄 Google Docs</div>
+        <p>Buat dari template CV → File → Download → PDF Document</p>
+      </div>
+    </div>
+
+    <div class="alert alert-danger">
+      <span class="alert-icon">🚨</span>
+      <div>
+        <strong>Hal yang WAJIB diperhatikan:</strong><br/>
+        · Email di setiap CV HARUS UNIK dan VALID — sistem akan auto-reply ke email itu<br/>
+        · Nama file PDF: <code style="font-family:monospace;background:rgba(239,68,68,0.15);padding:2px 6px;border-radius:4px">CV_01_Budi_Santoso.pdf</code>, <code style="font-family:monospace;background:rgba(239,68,68,0.15);padding:2px 6px;border-radius:4px">CV_02_Anisa_Rahmawati.pdf</code>, dst<br/>
+        · Kirim juga file Excel: Daftar_CV.xlsx (No | Nama | Email | Kategori)
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== JOBDESK 2 ===================== -->
+  <section id="jobdesk2">
+    <div class="section-header">
+      <div class="section-icon icon-cyan">🔑</div>
+      <div class="section-title-group">
+        <h2>Jobdesk 2 — Setup Akun & Credential</h2>
+        <p>PIC: <strong>Fawwaz & Bagus</strong> · Deadline: Pekan M3 Mei</p>
+      </div>
+    </div>
+
+    <div class="alert alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <div>Jobdesk ini adalah <strong>fondasi dari seluruh project</strong>. Tim workflow (Afif & Shinta) tidak bisa mulai sebelum semua credential selesai dan dikirim ke grup!</div>
+    </div>
+
+    <h3>📋 5 Service yang Harus Disiapkan</h3>
+
+    <div class="card">
+      <div class="card-title">A. 📧 Gmail (Akun HR Khusus)</div>
+      <p style="margin-bottom:12px">Buat akun Gmail baru yang akan menjadi <strong>inbox HR</strong> — semua CV pelamar dikirim ke sini.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-title">1. Buat akun Gmail baru</div>
+          <div class="step-desc">Email disarankan: <code style="font-family:monospace;background:rgba(6,182,212,0.1);padding:2px 8px;border-radius:4px;color:var(--cyan-light)">hr.aicvsorter2026@gmail.com</code></div>
+        </div>
+        <div class="step">
+          <div class="step-title">2. Hubungkan ke n8n</div>
+          <div class="step-desc">Di n8n → Settings → Credentials → Add → <strong>Gmail OAuth2 API</strong> → Connect → Login akun HR → Save dengan nama <code style="font-family:monospace;background:rgba(6,182,212,0.1);padding:2px 8px;border-radius:4px;color:var(--cyan-light)">"Gmail HR - CV Sorter"</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">B. 🤖 Groq API (AI Model — GRATIS)</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-title">1. Daftar Groq</div>
+          <div class="step-desc">Buka <a href="https://console.groq.com" target="_blank">console.groq.com</a> → Login dengan Google</div>
+        </div>
+        <div class="step">
+          <div class="step-title">2. Buat API Key</div>
+          <div class="step-desc">Dashboard Groq → <strong>API Keys</strong> → <strong>Create API Key</strong> → Nama: "AI CV Sorter Final Project" → <span style="color:#fcd34d">⚠️ SEGERA COPY! Hanya tampil sekali!</span></div>
+        </div>
+        <div class="step">
+          <div class="step-title">3. Tambahkan ke n8n</div>
+          <div class="step-desc">Settings → Credentials → Add → cari <strong>"Groq"</strong> → paste API key → Save</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">C. 📝 Notion (Job Description Database)</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-title">1. Buat halaman Job Description</div>
+          <div class="step-desc">Di Notion, buat halaman baru → Judul: <strong>"Job Description - Data Analyst"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-title">2. Isi konten halaman persis seperti ini:</div>
+          <div class="code-block">Posisi: Data Analyst
+Perusahaan: PT. Teknologi Nusantara
+
+== KUALIFIKASI WAJIB ==
+- S1 Informatika / Statistik / Matematika / Teknik
+- Pengalaman minimal 1 tahun di bidang data analysis
+- Menguasai SQL (query, join, aggregation)
+- Menguasai Python atau R
+- Familiar dengan Tableau / Power BI / Google Data Studio
+
+== KUALIFIKASI TAMBAHAN ==
+- Cloud (AWS, GCP, Azure)
+- Machine Learning dasar
+- Git / version control
+
+== KRITERIA SKOR ==
+- Technical Skills : 40 poin (Python/R, SQL, Visualisasi)
+- Pengalaman Kerja : 30 poin
+- Pendidikan       : 15 poin
+- Soft Skills      : 15 poin
+
+Score >= 65 = LOLOS | Score < 65 = GAGAL</div>
+        </div>
+        <div class="step">
+          <div class="step-title">3. Buat Integration & copy API key</div>
+          <div class="step-desc"><a href="https://www.notion.so/my-integrations" target="_blank">notion.so/my-integrations</a> → New Integration → Nama "n8n AI CV Sorter" → Submit → Copy <strong>Internal Integration Secret</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-title">4. Connect Integration ke halaman</div>
+          <div class="step-desc">Kembali ke halaman Job Description → klik ••• → <strong>Add connections</strong> → pilih integration yang baru dibuat</div>
+        </div>
+        <div class="step">
+          <div class="step-title">5. Copy Page ID</div>
+          <div class="step-desc">Dari URL: <code style="font-family:monospace;font-size:11px;background:rgba(124,58,237,0.1);padding:2px 6px;border-radius:4px">notion.so/workspace/<strong>[INI PAGE ID-NYA]</strong>?v=...</code> → copy bagian yang dibold</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">D. 🗄️ Airtable (Database Rekrutmen)</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-title">1. Buat Base & Table di Airtable</div>
+          <div class="step-desc"><a href="https://airtable.com" target="_blank">airtable.com</a> → Add a base → Start from scratch → Nama: <strong>"Rekrutmen AI CV Sorter"</strong> → Rename tabel: <strong>"Data Pelamar"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-title">2. Buat kolom-kolom ini:</div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Nama Field</th><th>Tipe Field</th><th>Opsi</th></tr></thead>
+              <tbody>
+                <tr><td>Nama Pelamar</td><td>Single line text</td><td>—</td></tr>
+                <tr><td>Email Pelamar</td><td>Email</td><td>—</td></tr>
+                <tr><td>Posisi Dilamar</td><td>Single line text</td><td>—</td></tr>
+                <tr><td>Score AI</td><td>Number</td><td>—</td></tr>
+                <tr><td>Status</td><td>Single select</td><td>LOLOS, GAGAL, NO_PDF</td></tr>
+                <tr><td>Kelebihan</td><td>Long text</td><td>—</td></tr>
+                <tr><td>Kekurangan</td><td>Long text</td><td>—</td></tr>
+                <tr><td>Ringkasan AI</td><td>Long text</td><td>—</td></tr>
+                <tr><td>Tanggal Masuk</td><td>Date</td><td>—</td></tr>
+                <tr><td>Status Email</td><td>Single select</td><td>Sent, Pending, Failed</td></tr>
+                <tr><td>Link Calendar</td><td>URL</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-title">3. Buat API Token</div>
+          <div class="step-desc"><a href="https://airtable.com/create/tokens" target="_blank">airtable.com/create/tokens</a> → Create token → Nama "n8n CV Sorter" → Scopes: <strong>data.records:read</strong> + <strong>data.records:write</strong> → Access: pilih base tadi → Create → <span style="color:#fcd34d">⚠️ SEGERA COPY!</span></div>
+        </div>
+        <div class="step">
+          <div class="step-title">4. Copy Base ID</div>
+          <div class="step-desc">Dari URL: <code style="font-family:monospace;font-size:11px">airtable.com/<strong>appXXXXXXXXXXXXXX</strong>/...</code> → copy yang dimulai <code>app...</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">E. 📅 Google Calendar / Calendly (Link Interview)</div>
+      <p style="margin-bottom:12px">Buat link booking jadwal interview yang akan dikirim ke kandidat yang lolos.</p>
+      <div class="grid-2">
+        <div>
+          <p><strong>Opsi A — Google Calendar:</strong></p>
+          <ul>
+            <li>calendar.google.com → klik + → New appointment schedule</li>
+            <li>Judul: "Interview Data Analyst - PT. Teknologi Nusantara"</li>
+            <li>Durasi: 45 menit</li>
+            <li>Atur ketersediaan waktu</li>
+            <li>Copy link booking yang dihasilkan</li>
+          </ul>
+        </div>
+        <div>
+          <p><strong>Opsi B — Calendly (Lebih mudah):</strong></p>
+          <ul>
+            <li>calendly.com → Daftar gratis</li>
+            <li>Create event → "Interview Data Analyst"</li>
+            <li>Durasi 45 menit, atur ketersediaan</li>
+            <li>Copy link dari dashboard</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>📦 Format Laporan ke Grup (Kirim ini setelah selesai!)</h3>
+    <div class="code-block">📋 CREDENTIAL SUMMARY — Final Project AI CV Sorter
+
+<span class="comment">══════════════════════════════════════</span>
+<span class="key">1. GMAIL HR</span>
+   Email   : hr.aicvsorter2026@gmail.com
+   Status  : ✅ Connected di n8n
+<span class="comment">══════════════════════════════════════</span>
+<span class="key">2. GROQ API</span>
+   API Key : gsk_xxxxxxxxxxxxxxxxxxxx
+   Status  : ✅ Connected di n8n
+<span class="comment">══════════════════════════════════════</span>
+<span class="key">3. NOTION</span>
+   Token   : secret_xxxxxxxxxxxxxxxx
+   Page ID : xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   Status  : ✅ Connected di n8n
+<span class="comment">══════════════════════════════════════</span>
+<span class="key">4. AIRTABLE</span>
+   Token   : patxxxxxxxxxxxxxxxxxxxxxxxx
+   Base ID : appxxxxxxxxxxxxxxxx
+   Table   : Data Pelamar
+   Status  : ✅ Connected di n8n
+<span class="comment">══════════════════════════════════════</span>
+<span class="key">5. CALENDAR LINK</span>
+   Platform: Google Calendar / Calendly
+   Link    : https://...</div>
+
+    <div class="alert alert-danger">
+      <span class="alert-icon">🔒</span>
+      <div><strong>JANGAN share dokumen credential ini ke publik!</strong> Berisi API key yang sensitif. Kirim hanya di grup WA kelompok yang aman.</div>
+    </div>
+  </section>
+
+  <!-- ===================== JOBDESK 3 ===================== -->
+  <section id="jobdesk3">
+    <div class="section-header">
+      <div class="section-icon icon-green">⚙️</div>
+      <div class="section-title-group">
+        <h2>Jobdesk 3 — Pembuatan Workflow n8n</h2>
+        <p>PIC: <strong>Afif & Shinta</strong> · Deadline: Pekan M4-M5 Mei</p>
+      </div>
+    </div>
+
+    <div class="alert alert-danger">
+      <span class="alert-icon">🚨</span>
+      <div><strong>PRASYARAT:</strong> Jobdesk ini TIDAK BISA dimulai sebelum Fawwaz & Bagus mengirim Credential Summary ke grup. Tunggu dulu!</div>
+    </div>
+
+    <h3>🗺️ 9 Node yang Harus Dibangun</h3>
+    <div class="card">
+      <div class="flow" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px"><div class="flow-node">Node 1: Gmail Trigger</div><span style="color:var(--text-dim);font-size:12px">Pantau inbox HR, picu workflow saat CV masuk</span></div>
+        <div class="flow-arrow" style="padding-left:24px">↓</div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="flow-node">Node 2: IF — Cek PDF</div><span style="color:var(--text-dim);font-size:12px">Ada attachment PDF? Ya → lanjut | Tidak → catat NO_PDF</span></div>
+        <div class="flow-arrow" style="padding-left:24px">↓ Ya</div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="flow-node">Node 3: Extract from File</div><span style="color:var(--text-dim);font-size:12px">Baca teks dari PDF CV</span></div>
+        <div class="flow-arrow" style="padding-left:24px">↓</div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="flow-node">Node 4: HTTP Request → Notion</div><span style="color:var(--text-dim);font-size:12px">Ambil Job Description dari Notion</span></div>
+        <div class="flow-arrow" style="padding-left:24px">↓</div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="flow-node">Node 5: AI Agent (Groq)</div><span style="color:var(--text-dim);font-size:12px">Scoring CV vs Job Desc → output JSON</span></div>
+        <div class="flow-arrow" style="padding-left:24px">↓</div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="flow-node">Node 6: Switch LOLOS / GAGAL</div><span style="color:var(--text-dim);font-size:12px">Routing berdasarkan status dari AI</span></div>
+        <div style="display:flex;gap:40px;padding-left:24px;margin-top:4px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="flow-node" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7">Node 7A: Generate Accept Email</div>
+            <div class="flow-node" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7">Node 8A: Gmail Send (Accept + Calendar)</div>
+            <div class="flow-node" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7">Node 9A: Airtable (Simpan LOLOS)</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="flow-node" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:#fca5a5">Node 7B: Generate Rejection Email</div>
+            <div class="flow-node" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:#fca5a5">Node 8B: Gmail Send (Rejection)</div>
+            <div class="flow-node" style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:#fca5a5">Node 9B: Airtable (Simpan GAGAL)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>📝 Konfigurasi Detail Per Node</h3>
+
+    <div class="card">
+      <div class="card-title">🔵 Node 5 — System Prompt AI (Groq)</div>
+      <p style="margin-bottom:10px;font-size:13px">Copy-paste prompt ini ke field <strong>"System Message"</strong> pada AI Agent node:</p>
+      <div class="code-block">Kamu adalah AI Recruitment Specialist yang bertugas menilai CV kandidat secara objektif.
+
+JOB DESCRIPTION:
+Posisi: Data Analyst | PT. Teknologi Nusantara
+Wajib: S1 Informatika/Statistik/Matematika, min. 1 thn pengalaman data, SQL, Python/R, tools visualisasi
+Plus: Cloud, Machine Learning, Git
+Skor: Technical 40 poin | Pengalaman 30 poin | Pendidikan 15 poin | Soft Skills 15 poin
+
+CV KANDIDAT:
+{{ $('📄 Extract Teks dari CV PDF').item.json.text }}
+
+Tugasmu:
+1. Analisis kesesuaian CV dengan kriteria di atas
+2. Berikan skor total 0-100
+3. Status: "LOLOS" jika score >= 65 | "GAGAL" jika score < 65
+4. Identifikasi 3 kelebihan dan 2 kekurangan
+5. Ekstrak nama lengkap dan email dari CV
+
+KEMBALIKAN HANYA JSON VALID (tanpa markdown):
+{"nama_pelamar":"string","email_pelamar":"string","posisi_dilamar":"Data Analyst","score":number,"status":"LOLOS atau GAGAL","kelebihan":"string","kekurangan":"string","ringkasan_ai":"string"}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✉️ Prompt — Generate Accept Email (Node 7A)</div>
+      <div class="code-block">Buat email penerimaan seleksi awal yang hangat dan profesional dalam Bahasa Indonesia.
+
+Nama kandidat : {{ $('🤖 AI Scoring').item.json.output.nama_pelamar }}
+Posisi        : Data Analyst
+Kelebihan     : {{ $('🤖 AI Scoring').item.json.output.kelebihan }}
+Link interview: [MASUKKAN LINK CALENDAR DARI JOBDESK 2]
+
+Syarat: Sapa nama, sampaikan lolos, sebut kelebihan spesifik, minta booking via link, maks 150 kata.
+Kembalikan HANYA isi email (tanpa subject).</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✉️ Prompt — Generate Rejection Email (Node 7B)</div>
+      <div class="code-block">Buat email penolakan yang sopan, personal, dan memotivasi dalam Bahasa Indonesia.
+
+Nama kandidat : {{ $('🤖 AI Scoring').item.json.output.nama_pelamar }}
+Posisi        : Data Analyst
+Kekurangan    : {{ $('🤖 AI Scoring').item.json.output.kekurangan }}
+
+Syarat: Sapa nama, tolak dengan halus, beri saran konstruktif dari kekurangan, tutup dengan motivasi, maks 150 kata.
+Kembalikan HANYA isi email (tanpa subject).</div>
+    </div>
+
+    <h3>🧪 Langkah Testing</h3>
+    <ul id="testChecklist" class="checklist">
+      <li onclick="toggleCheck(this)"><div class="check-box"></div><span>Kirim email ke Gmail HR dengan lampiran CV_01_Budi_Santoso.pdf</span></li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div><span>Klik "Test workflow" di n8n → verifikasi teks CV berhasil diekstrak</span></li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div><span>Cek AI memberikan score & status JSON yang valid</span></li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div><span>Verifikasi email balasan accept/reject terkirim ke email yang ada di CV</span></li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div><span>Cek data tersimpan di Airtable dengan field yang benar</span></li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div><span>Ulangi test dengan CV kategori GAGAL (misal CV Andi Setiawan)</span></li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div><span>Test semua 20 CV satu per satu, screenshot hasilnya</span></li>
+    </ul>
+
+    <h3>📦 Output yang Diserahkan</h3>
+    <ul>
+      <li>Screenshot workflow n8n (semua node terhubung)</li>
+      <li>Screenshot test execution sukses</li>
+      <li>Screenshot Airtable berisi data hasil testing</li>
+      <li>Screenshot email accept dan rejection yang diterima</li>
+    </ul>
+  </section>
+
+  <!-- ===================== JOBDESK 4 ===================== -->
+  <section id="jobdesk4">
+    <div class="section-header">
+      <div class="section-icon icon-yellow">🎨</div>
+      <div class="section-title-group">
+        <h2>Jobdesk 4 — Slide Presentasi</h2>
+        <p>PIC: <strong>Semua Anggota</strong> · Deadline: Pekan M1-M2 Juni</p>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">💡</span>
+      <div><strong>Tips:</strong> Gunakan Google Slides atau Canva. Buat tema konsisten — warna ungu/biru gelap sesuai topik AI. Estimasi: <strong>15–20 slide</strong> total.</div>
+    </div>
+
+    <h3>📊 Struktur Slide (17 Slide)</h3>
+
+    <p style="margin-bottom:16px;font-size:13px;color:var(--purple-light);font-weight:600">BAGIAN 1 — PEMBUKA</p>
+    <div class="slide-item">
+      <div class="slide-num">1</div>
+      <div class="slide-content">
+        <strong>Cover / Judul</strong>
+        <p>Judul besar: "Sistem Perekrutan Cerdas Terintegrasi" · Sub-judul: AI CV Sorter & Auto-Scheduler · Topik No.20 · Nama semua anggota · Logo institusi</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">2</div>
+      <div class="slide-content">
+        <strong>Daftar Anggota & Jobdesk</strong>
+        <p>Tabel: No | Nama | Jobdesk. Highlight ketua kelompok.</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">3</div>
+      <div class="slide-content">
+        <strong>Agenda Presentasi</strong>
+        <p>Daftar 7 bagian agenda (sesuai struktur slide ini)</p>
+      </div>
+    </div>
+
+    <p style="margin:20px 0 16px;font-size:13px;color:var(--cyan-light);font-weight:600">BAGIAN 2 — TUJUAN DAN RUANG LINGKUP</p>
+    <div class="slide-item">
+      <div class="slide-num">4</div>
+      <div class="slide-content">
+        <strong>Latar Belakang Masalah</strong>
+        <p>Statistik menarik + 3 poin masalah: (1) Volume CV besar, (2) Penilaian subjektif inkonsisten, (3) Kandidat lolos tidak langsung dapat jadwal interview</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">5</div>
+      <div class="slide-content">
+        <strong>Tujuan & Ruang Lingkup</strong>
+        <p>Tujuan: otomasi seleksi CV. Ruang lingkup: Input (email CV PDF) → Proses (ekstraksi+scoring AI) → Output (email balasan + Airtable). Out of scope: interview tatap muka.</p>
+      </div>
+    </div>
+
+    <p style="margin:20px 0 16px;font-size:13px;color:var(--green);font-weight:600">BAGIAN 3 — SOLUSI DAN ARSITEKTUR</p>
+    <div class="slide-item">
+      <div class="slide-num">6</div>
+      <div class="slide-content">
+        <strong>Overview Solusi</strong>
+        <p>Perbandingan: Manual HR Process vs AI CV Sorter. Key benefit: hemat waktu, konsisten, skalabel.</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">7</div>
+      <div class="slide-content">
+        <strong>Arsitektur & Tools</strong>
+        <p>Diagram arsitektur dengan logo tools: Gmail → n8n → Groq AI → Notion → Airtable → Google Calendar. Singkat jelaskan peran masing-masing.</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">8</div>
+      <div class="slide-content">
+        <strong>Alur Proses Detail (Flowchart)</strong>
+        <p>Email CV → Cek PDF → Extract Teks → Groq AI Scoring → Switch LOLOS/GAGAL → Email Accept+Calendar / Email Rejection → Simpan Airtable</p>
+      </div>
+    </div>
+
+    <p style="margin:20px 0 16px;font-size:13px;color:var(--yellow);font-weight:600">BAGIAN 4 — IMPLEMENTASI</p>
+    <div class="slide-item">
+      <div class="slide-num">9</div>
+      <div class="slide-content">
+        <strong>Tools yang Digunakan</strong>
+        <p>Tabel: Tool | Fungsi | Keterangan (Gmail, n8n, Groq API, Notion, Airtable, Google Calendar)</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">10</div>
+      <div class="slide-content">
+        <strong>Screenshot Workflow n8n</strong>
+        <p>Foto workflow lengkap di n8n. Tambahkan callout/label di setiap node.</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">11</div>
+      <div class="slide-content">
+        <strong>Konfigurasi AI Scoring (Groq)</strong>
+        <p>Tampilkan system prompt AI + contoh output JSON yang dihasilkan</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">12</div>
+      <div class="slide-content">
+        <strong>Demo / Screenshot Hasil (4-in-1)</strong>
+        <p>(1) Email CV masuk di Gmail HR · (2) n8n workflow running · (3) Email accept/reject diterima kandidat · (4) Data di Airtable</p>
+      </div>
+    </div>
+
+    <p style="margin:20px 0 16px;font-size:13px;color:var(--purple-light);font-weight:600">BAGIAN 5 — HASIL DAN EVALUASI</p>
+    <div class="slide-item">
+      <div class="slide-num">13</div>
+      <div class="slide-content">
+        <strong>Hasil Pengujian (Tabel)</strong>
+        <p>Total CV diproses: 20 · CV berhasil diekstrak: 20/20 · Prediksi AI akurat: XX/20 · Email terkirim: 20/20 · Rata-rata waktu: ~15 detik/CV</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">14</div>
+      <div class="slide-content">
+        <strong>Kelebihan & Kekurangan Sistem</strong>
+        <p>✅ Kelebihan: otomatis, konsisten, email personal. ❌ Keterbatasan: CV scan/gambar tidak terbaca, butuh koneksi internet, AI bisa salah di CV terlalu singkat.</p>
+      </div>
+    </div>
+
+    <p style="margin:20px 0 16px;font-size:13px;color:var(--red);font-weight:600">BAGIAN 6 — TANTANGAN</p>
+    <div class="slide-item">
+      <div class="slide-num">15</div>
+      <div class="slide-content">
+        <strong>Tantangan & Solusi</strong>
+        <p>3–4 tantangan nyata yang dihadapi (mis: konfigurasi OAuth2 Gmail, output AI tidak selalu JSON valid, koordinasi tim) + cara mengatasinya</p>
+      </div>
+    </div>
+
+    <p style="margin:20px 0 16px;font-size:13px;color:var(--green);font-weight:600">BAGIAN 7 — PENUTUP</p>
+    <div class="slide-item">
+      <div class="slide-num">16</div>
+      <div class="slide-content">
+        <strong>Kesimpulan</strong>
+        <p>Sistem berhasil otomasi seleksi CV dengan akurasi XX%. Waktu seleksi berkurang drastis. Potensi implementasi di dunia HR nyata sangat besar.</p>
+      </div>
+    </div>
+    <div class="slide-item">
+      <div class="slide-num">17</div>
+      <div class="slide-content">
+        <strong>Q&A / Terima Kasih</strong>
+        <p>Ucapan terima kasih · Nama kelompok · Kalimat penutup berkesan</p>
+      </div>
+    </div>
+
+    <div class="alert alert-success">
+      <span class="alert-icon">💡</span>
+      <div>
+        <strong>Tips desain:</strong><br/>
+        · Maks 5 bullet per slide · Pakai <strong>screenshot nyata</strong> dari workflow & hasil testing<br/>
+        · Gunakan ikon dari flaticon.com · Pilih 2-3 warna utama dan konsisten<br/>
+        · Setiap slide harus punya <strong>judul yang jelas</strong> di bagian atas
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SCHEDULE ===================== -->
+  <section id="schedule">
+    <div class="section-header">
+      <div class="section-icon icon-red">📅</div>
+      <div class="section-title-group">
+        <h2>Time Schedule & Progress</h2>
+        <p>Klik item untuk tandai selesai · MEI – JUNI 2026</p>
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">📌</span>
+      <div>Klik baris pada tabel di bawah untuk menandai tugas sebagai selesai. Progress tersimpan di browser kamu.</div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-header">
+        <div>#</div>
+        <div>Keterangan</div>
+        <div>PIC</div>
+        <div>Status</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t1">
+        <div class="status-dot" id="dot-t1"></div>
+        <div><strong>Data Dummy 20 CV (PDF)</strong></div>
+        <div><span class="tag tag-purple">Fakhrul</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t2">
+        <div class="status-dot" id="dot-t2"></div>
+        <div><strong>Buat Akun Gmail HR</strong></div>
+        <div><span class="tag tag-cyan">Fawwaz, Bagus</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t3">
+        <div class="status-dot" id="dot-t3"></div>
+        <div><strong>Setup Groq API</strong></div>
+        <div><span class="tag tag-cyan">Fawwaz, Bagus</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t4">
+        <div class="status-dot" id="dot-t4"></div>
+        <div><strong>Setup Notion + Isi Job Description</strong></div>
+        <div><span class="tag tag-cyan">Fawwaz, Bagus</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t5">
+        <div class="status-dot" id="dot-t5"></div>
+        <div><strong>Setup Airtable (Base + Kolom)</strong></div>
+        <div><span class="tag tag-cyan">Fawwaz, Bagus</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t6">
+        <div class="status-dot" id="dot-t6"></div>
+        <div><strong>Buat Link Google Calendar / Calendly</strong></div>
+        <div><span class="tag tag-cyan">Fawwaz, Bagus</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t7">
+        <div class="status-dot" id="dot-t7"></div>
+        <div><strong>Kirim Credential Summary ke Grup</strong> <span style="font-size:12px;color:#fcd34d">⚡ Kritis!</span></div>
+        <div><span class="tag tag-cyan">Fawwaz, Bagus</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t8">
+        <div class="status-dot" id="dot-t8"></div>
+        <div><strong>Build Workflow n8n (Semua Node)</strong></div>
+        <div><span class="tag tag-green">Afif, Shinta</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M4 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t9">
+        <div class="status-dot" id="dot-t9"></div>
+        <div><strong>Test Workflow dengan 5 CV Sample</strong></div>
+        <div><span class="tag tag-green">Afif, Shinta</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M4 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t10">
+        <div class="status-dot" id="dot-t10"></div>
+        <div><strong>Test Workflow dengan 20 CV Lengkap</strong></div>
+        <div><span class="tag tag-green">Afif, Shinta</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M5 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t11">
+        <div class="status-dot" id="dot-t11"></div>
+        <div><strong>Screenshot Semua Hasil untuk Slide</strong></div>
+        <div><span class="tag tag-green">Afif, Shinta</span></div>
+        <div style="font-size:12px;color:var(--text-dim)">M5 Mei</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t12">
+        <div class="status-dot" id="dot-t12"></div>
+        <div><strong>Draft Slide Presentasi</strong></div>
+        <div style="font-size:12px;color:var(--text-dim)">Semua</div>
+        <div style="font-size:12px;color:var(--text-dim)">M1 Juni</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t13">
+        <div class="status-dot" id="dot-t13"></div>
+        <div><strong>Review & Finishing Slide</strong></div>
+        <div style="font-size:12px;color:var(--text-dim)">Semua</div>
+        <div style="font-size:12px;color:var(--text-dim)">M2 Juni</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t14">
+        <div class="status-dot" id="dot-t14"></div>
+        <div><strong>Gladi Showcase Final Project</strong></div>
+        <div style="font-size:12px;color:var(--text-dim)">Semua</div>
+        <div style="font-size:12px;color:var(--text-dim)">M3 Juni</div>
+      </div>
+      <div class="timeline-item" onclick="toggleTimeline(this)" data-id="t15">
+        <div class="status-dot" id="dot-t15"></div>
+        <div><strong>🎯 Showcase / Presentasi Final Project</strong></div>
+        <div style="font-size:12px;color:var(--text-dim)">Semua</div>
+        <div style="font-size:12px;color:var(--text-dim)">M4 Juni</div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><div style="width:10px;height:10px;border-radius:50%;background:var(--text-dim)"></div> Belum dikerjakan</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><div style="width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(16,185,129,0.5)"></div> Selesai ✅</div>
+      <button onclick="clearProgress()" style="margin-left:auto;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px">Reset Progress</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const idx = ['overview','jobdesk1','jobdesk2','jobdesk3','jobdesk4','schedule'].indexOf(id);
+    document.querySelectorAll('nav button')[idx].classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function toggleCheck(el) {
+    const box = el.querySelector('.check-box');
+    box.classList.toggle('checked');
+    el.classList.toggle('done');
+  }
+
+  // Timeline progress (localStorage)
+  const saved = JSON.parse(localStorage.getItem('fp_progress') || '{}');
+  Object.keys(saved).forEach(id => {
+    if (saved[id]) {
+      const dot = document.getElementById('dot-' + id);
+      if (dot) dot.classList.add('done');
+    }
+  });
+
+  function toggleTimeline(el) {
+    const id = el.dataset.id;
+    const dot = document.getElementById('dot-' + id);
+    const isDone = dot.classList.toggle('done');
+    saved[id] = isDone;
+    localStorage.setItem('fp_progress', JSON.stringify(saved));
+  }
+
+  function clearProgress() {
+    if (!confirm('Reset semua progress?')) return;
+    Object.keys(saved).forEach(k => delete saved[k]);
+    localStorage.setItem('fp_progress', '{}');
+    document.querySelectorAll('.status-dot').forEach(d => d.classList.remove('done', 'progress'));
+  }
+</script>
+
+</body>
+</html>
