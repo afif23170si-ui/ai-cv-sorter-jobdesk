@@ -543,12 +543,132 @@
     .slide-content strong { font-size: 14px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px; }
     .slide-content p { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
 
-    /* RESPONSIVE */
+    /* TABLE SCROLL WRAPPER */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius); }
+    .table-scroll table { min-width: 520px; }
+
+    /* ── RESPONSIVE 768px ── */
+    @media (max-width: 768px) {
+      header { padding: 40px 20px 36px; }
+      main { padding: 28px 16px 72px; }
+      .nav-wrapper { padding: 0 12px; }
+      nav button { padding: 14px 14px; font-size: 12px; }
+      .section-title-group h2 { font-size: 20px; }
+      .card { padding: 18px; }
+      .code-block { font-size: 11.5px; padding: 12px 14px; }
+      .alert { padding: 12px 14px; font-size: 13px; }
+      th { padding: 8px 10px; font-size: 11px; }
+      td { padding: 8px 10px; font-size: 13px; }
+    }
+
+    /* ── RESPONSIVE 640px ── */
     @media (max-width: 640px) {
-      .team-grid { grid-template-columns: 36px 1fr 100px; }
-      .team-grid > *:nth-child(3), .team-row > div:nth-child(3) { display: none; }
-      .timeline-item, .timeline-header { grid-template-columns: 36px 1fr 90px; }
+      /* Header */
+      header { padding: 32px 16px 28px; }
+      header p.subtitle { font-size: 14px; }
+      .meta-chip { font-size: 12px; padding: 5px 10px; }
+
+      /* Nav */
+      .nav-wrapper { padding: 0 8px; }
+      nav button { padding: 13px 10px; font-size: 11.5px; }
+
+      /* Main */
+      main { padding: 24px 14px 64px; }
+      .section-header { gap: 12px; margin-bottom: 24px; }
+      .section-icon { width: 44px; height: 44px; font-size: 20px; border-radius: 12px; }
+      .section-title-group h2 { font-size: 18px; }
+
+      /* Cards */
+      .card { padding: 16px; }
+      .card-title { font-size: 14px; }
+
+      /* Team grid: hide member column */
+      .team-grid { grid-template-columns: 36px 1fr 90px; }
+      .team-grid-header > div:nth-child(3),
+      .team-row > div:nth-child(3) { display: none; }
+      .team-row > div { font-size: 13px; padding: 12px 12px; }
+
+      /* Timeline: hide deadline column */
+      .timeline-item, .timeline-header { grid-template-columns: 28px 1fr 80px; gap: 8px; }
       .timeline-item > *:last-child, .timeline-header > *:last-child { display: none; }
+      .timeline-item { padding: 11px 12px; font-size: 12.5px; }
+
+      /* Dist cards: stack vertically */
+      .grid-2 { grid-template-columns: 1fr !important; }
+      .dist-card { padding: 14px 16px; }
+      .dist-num { font-size: 34px; min-width: 50px; }
+      .dist-label { font-size: 13px; }
+
+      /* Flow: wrap naturally */
+      .flow-node { font-size: 11.5px; padding: 6px 10px; white-space: normal; }
+
+      /* Code block */
+      .code-block { font-size: 11px; padding: 10px 12px; }
+
+      /* Alert */
+      .alert { padding: 10px 12px; font-size: 12.5px; }
+      .alert-icon { font-size: 16px; }
+
+      /* Checklist */
+      .checklist li { font-size: 13px; }
+      .check-box { width: 20px; height: 20px; flex-shrink: 0; } /* bigger tap target */
+
+      /* Slide items */
+      .slide-item { padding: 12px 14px; gap: 10px; }
+      .slide-content strong { font-size: 13px; }
+      .slide-content p { font-size: 12px; }
+
+      /* Steps */
+      .steps { padding-left: 28px; }
+      .step-title { font-size: 13px; }
+      .step-desc { font-size: 12.5px; }
+
+      h3 { font-size: 14px; }
+      p { font-size: 13.5px; }
+      li { font-size: 13px; }
+    }
+
+    /* ── RESPONSIVE 480px ── */
+    @media (max-width: 480px) {
+      header { padding: 28px 14px 24px; }
+      .badge { font-size: 10.5px; padding: 5px 12px; }
+
+      nav button { padding: 12px 8px; font-size: 11px; gap: 3px; }
+
+      main { padding: 20px 12px 60px; }
+
+      /* Team grid: only 2 cols on tiny screens */
+      .team-grid { grid-template-columns: 28px 1fr; }
+      .team-grid-header > div:nth-child(3),
+      .team-grid-header > div:nth-child(4),
+      .team-row > div:nth-child(3),
+      .team-row > div:nth-child(4) { display: none; }
+
+      /* Timeline: only 2 cols */
+      .timeline-item, .timeline-header { grid-template-columns: 22px 1fr; }
+      .timeline-item > *:nth-child(3),
+      .timeline-item > *:nth-child(4),
+      .timeline-header > *:nth-child(3),
+      .timeline-header > *:nth-child(4) { display: none; }
+
+      .section-icon { width: 40px; height: 40px; font-size: 18px; }
+      .section-title-group h2 { font-size: 17px; }
+
+      .dist-num { font-size: 30px; }
+      .code-block { font-size: 10.5px; padding: 10px; }
+
+      /* Tags: smaller */
+      .tag { padding: 2px 8px; font-size: 11px; }
+    }
+
+    /* ── RESPONSIVE 360px ── */
+    @media (max-width: 360px) {
+      header { padding: 24px 12px 20px; }
+      main { padding: 16px 10px 56px; }
+      .card { padding: 14px 12px; }
+      nav button { padding: 11px 7px; font-size: 10.5px; }
+      .section-title-group h2 { font-size: 16px; }
+      .code-block { font-size: 10px; }
     }
 
     /* SCROLLBAR */
@@ -772,6 +892,7 @@
 
     <h3>👥 Daftar 20 Nama yang Disarankan</h3>
     <div class="card" style="padding:0;overflow:hidden">
+      <div class="table-scroll">
       <table>
         <thead>
           <tr><th>No</th><th>Nama</th><th>Email</th><th>Kategori</th><th>Latar Belakang</th></tr>
@@ -799,6 +920,7 @@
           <tr><td>20</td><td><strong>Yuni Astuti</strong></td><td>yuni.astuti@gmail.com</td><td><span class="tag tag-red">❌ Tidak Lolos</span></td><td>D3 Perhotelan, hospitality background</td></tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <h3>🛠️ Tools yang Disarankan</h3>
@@ -930,8 +1052,8 @@ Score >= 65 = LOLOS | Score < 65 = GAGAL</div>
         </div>
         <div class="step">
           <div class="step-title">2. Buat kolom-kolom ini:</div>
-          <div style="overflow-x:auto">
-            <table>
+          <div class="table-scroll">
+            <table style="min-width:380px">
               <thead><tr><th>Nama Field</th><th>Tipe Field</th><th>Opsi</th></tr></thead>
               <tbody>
                 <tr><td>Nama Pelamar</td><td>Single line text</td><td>—</td></tr>
